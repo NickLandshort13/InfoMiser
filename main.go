@@ -12,6 +12,7 @@ func main() {
 
 	http.HandleFunc("/", h.Home)
 	http.HandleFunc("/lookup", h.Lookup)
+	http.HandleFunc("/subdomains", h.LookupDomain)
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
 	println("Server running at http://localhost:8080")
