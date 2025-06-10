@@ -2,8 +2,9 @@ package main
 
 import (
 	"html/template"
-	"infomiser/internal/handlers"
 	"net/http"
+
+	"infomiser/internal/handlers"
 )
 
 func main() {
@@ -12,8 +13,9 @@ func main() {
 
 	http.HandleFunc("/", h.Home)
 	http.HandleFunc("/lookup", h.Lookup)
-	http.HandleFunc("/subdomains", h.LookupDomain)
-	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+
+	fs := http.FileServer(http.Dir("static"))
+	http.Handle("/static/", http.StripPrefix("/static/", fs))
 
 	println("Server running at http://localhost:8080")
 	http.ListenAndServe(":8080", nil)

@@ -1,18 +1,15 @@
 {{ define "results-multi" }}
-{{ if .HasIP }}
-<div class="mb-6">
-  {{ template "results-geo" .IPInfo }}
-</div>
-{{ end }}
+<div class="space-y-6">
+  {{ if .HasIP }}
+  <div>
+    {{ template "results-geo" .IPInfo }}
+  </div>
+  {{ end }}
 
-{{ if .HasSubdomains }}
-<div>
-  <h2 class="text-2xl font-bold text-gray-800 mb-4">🔓 Subdomains for {{ .Domain }}</h2>
-  <ul class="list-disc pl-5 space-y-1 max-h-60 overflow-y-auto">
-    {{ range .Subdomains }}
-    <li>{{ . }}</li>
-    {{ end }}
-  </ul>
+  {{ if .HasSubdomains }}
+  <div>
+    {{ template "results-subdomains" . }}
+  </div>
+  {{ end }}
 </div>
-{{ end }}
 {{ end }}

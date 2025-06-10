@@ -14,7 +14,5 @@ func New(tmpl *template.Template) *Handlers {
 }
 
 func (h *Handlers) Home(w http.ResponseWriter, r *http.Request) {
-	h.templates.ExecuteTemplate(w, "index.html", map[string]string{
-		"Title": "InfoMiser — OSINT Lookup",
-	})
+	h.templates.ExecuteTemplate(w, "index.html", nil)
 }
