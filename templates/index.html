@@ -16,6 +16,20 @@
     .animate-fade-in {
       animation: fadeIn 0.5s ease-out forwards;
     }
+
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #4f46e5;
+      border-top-color: #a78bfa;
+      border-radius: 9999px;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
   </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col items-center justify-start p-6">
@@ -40,7 +54,12 @@
         🔍 Search
       </button>
     </div>
-    <div id="spinner" class="hidden mt-2 text-indigo-500 font-medium">Loading...</div>
+
+    <!-- HTMX Indicator -->
+    <div id="spinner" class="htmx-indicator mt-2 flex items-center gap-2 text-indigo-500 font-medium">
+      <span class="spinner"></span>
+      <span>Loading...</span>
+    </div>
   </form>
 
   <!-- Results Area -->

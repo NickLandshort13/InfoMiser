@@ -1,12 +1,14 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
 	"net/url"
 	"regexp"
 	"strings"
+	"time"
 )
 
 func isDomain(host string) bool {
@@ -18,10 +20,12 @@ func isDomain(host string) bool {
 	return domainRegex.MatchString(host)
 }
 
-func fetchCrtShSubdomains(domain string) ([]string, error) {
-	url := "https://crt.sh/?q=" + url.QueryEscape("%."+domain) + "&output=json"
+func fetchCrtShSubdomainsWithTimeout(domain string, timeout time.Duration) ([]string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
 
-	resp, err := http.Get(url)
+	req, _ := http.NewRequestWithContext(ctx, "GET", "https://crt.sh/?q="+url.QueryEscape("%."+domain)+"&output=json", nil)
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -41,10 +45,8 @@ func fetchCrtShSubdomains(domain string) ([]string, error) {
 
 	for _, cert := range raw {
 		nameValue, ok := cert["common_name"].(string)
-		if ok {
-			if strings.Contains(nameValue, ".") && !strings.HasPrefix(nameValue, "*") {
-				subs[nameValue] = true
-			}
+		if ok && strings.Contains(nameValue, ".") && !strings.HasPrefix(nameValue, "*") {
+			subs[nameValue] = true
 		}
 
 		altNames, ok := cert["name_value"].(string)
@@ -79,7 +81,7 @@ func (h *Handlers) LookupDomain(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	subdomains, err := fetchCrtShSubdomains(host)
+	subdomains, err := fetchCrtShSubdomainsWithTimeout(host, 3*time.Second)
 	if err != nil || len(subdomains) == 0 {
 		w.Write([]byte(""))
 		return

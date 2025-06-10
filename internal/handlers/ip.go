@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"infomiser/internal/models"
 )
@@ -45,14 +46,29 @@ func getIPFromDomain(domain string) (string, error) {
 	return "", fmt.Errorf("no IPv4 found")
 }
 
-func (h *Handlers) Lookup(w http.ResponseWriter, r *http.Request) {
+func isValidQuery(s string) bool {
+	if s == "" {
+		return false
+	}
 
+	if len(s) > 100 {
+		return false
+	}
+
+	return true
+}
+
+func (h *Handlers) Lookup(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query().Get("q")
 	host := cleanInput(q)
 
-	if host == "" {
-		w.Write([]byte(""))
+	if host == "" || !isValidQuery(host) {
+		w.Write([]byte("")) // Не показываем ничего
 		return
+	}
+
+	client := &http.Client{
+		Timeout: 10 * time.Second,
 	}
 
 	var ip string
@@ -72,7 +88,7 @@ func (h *Handlers) Lookup(w http.ResponseWriter, r *http.Request) {
 
 	var ipInfo models.IPInfo
 	if ip != "" {
-		resp, err := http.Get("https://ipwho.is/" + url.PathEscape(ip))
+		resp, err := client.Get("https://ipwho.is/" + url.PathEscape(ip))
 		if err == nil && resp.StatusCode == 200 {
 			body, _ := io.ReadAll(resp.Body)
 			if len(body) > 0 && body[0] == '{' {
@@ -83,7 +99,7 @@ func (h *Handlers) Lookup(w http.ResponseWriter, r *http.Request) {
 
 	var subdomains []string
 	if isDomain(host) {
-		subs, err := fetchCrtShSubdomains(host)
+		subs, err := fetchCrtShSubdomainsWithTimeout(host, 3*time.Second)
 		if err == nil && len(subs) > 0 {
 			subdomains = subs
 		}
@@ -105,6 +121,5 @@ func (h *Handlers) Lookup(w http.ResponseWriter, r *http.Request) {
 		Subdomains:    subdomains,
 	}
 
-	h.templates.ExecuteTemplate(w, "results-multi.html", data)
-	fmt.Println(data.HasIP)
+	h.templates.ExecuteTemplate(w, "results-multi", data)
 }
