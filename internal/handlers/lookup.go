@@ -82,7 +82,6 @@ func (h *Handlers) Lookup(w http.ResponseWriter, r *http.Request) {
 	ssl, _ := services.AnalyzeSSL(host)
 	shodan, _ := services.QueryShodan(ip)
 	pwned, _ := services.CheckBreaches(host)
-
 	data := struct {
 		Domain     string
 		IP         string
