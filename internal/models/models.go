@@ -16,13 +16,6 @@ type Subdomains struct {
 	Subdomains []string
 }
 
-type SSLScan struct {
-	Host      string
-	Valid     bool
-	Protocols []string
-	Issuer    string
-}
-
 type Shodan struct {
 	IP    string
 	Ports []int
@@ -30,5 +23,17 @@ type Shodan struct {
 
 type Pwned struct {
 	Domain   string
-	Breaches []string
+	Breaches []PwnedBreach
+	Error    string
+}
+
+type PwnedBreach struct {
+	Name        string
+	Title       string
+	BreachDate  string
+	Description string
+	PwnCount    int
+	DataClasses []string
+	LogoPath    string
+	IsVerified  bool
 }

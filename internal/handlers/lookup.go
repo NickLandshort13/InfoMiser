@@ -15,7 +15,6 @@ func (h *Handlers) Home(w http.ResponseWriter, r *http.Request) {
 		IP         string
 		IPWhois    models.IPWhois
 		Subdomains models.Subdomains
-		SSL        models.SSLScan
 		Shodan     models.Shodan
 		Pwned      models.Pwned
 	}{
@@ -34,12 +33,6 @@ func (h *Handlers) Home(w http.ResponseWriter, r *http.Request) {
 		Subdomains: models.Subdomains{
 			Domain:     "",
 			Subdomains: nil,
-		},
-		SSL: models.SSLScan{
-			Host:      "",
-			Valid:     false,
-			Protocols: nil,
-			Issuer:    "",
 		},
 		Shodan: models.Shodan{
 			IP:    "",
@@ -79,7 +72,6 @@ func (h *Handlers) Lookup(w http.ResponseWriter, r *http.Request) {
 
 	ipWhois, _ := services.GetIPWhois(ip)
 	subdomains, _ := services.FetchHackerTargetSubdomains(host)
-	ssl, _ := services.AnalyzeSSL(host)
 	shodan, _ := services.QueryShodan(ip)
 	pwned, _ := services.CheckBreaches(host)
 	data := struct {
@@ -87,7 +79,6 @@ func (h *Handlers) Lookup(w http.ResponseWriter, r *http.Request) {
 		IP         string
 		IPWhois    models.IPWhois
 		Subdomains models.Subdomains
-		SSL        models.SSLScan
 		Shodan     models.Shodan
 		Pwned      models.Pwned
 	}{
@@ -95,7 +86,6 @@ func (h *Handlers) Lookup(w http.ResponseWriter, r *http.Request) {
 		IP:         ip,
 		IPWhois:    ipWhois,
 		Subdomains: models.Subdomains{Domain: host, Subdomains: subdomains},
-		SSL:        ssl,
 		Shodan:     shodan,
 		Pwned:      pwned,
 	}

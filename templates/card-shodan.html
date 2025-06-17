@@ -2,6 +2,7 @@
 {{ $data := .Shodan }}
 <div class="bg-white shadow-md rounded-lg p-6">
   <h2 class="text-2xl font-bold text-gray-800 mb-4">📡 Shodan Info for {{ $data.IP }}</h2>
+  <div class="border-b border-gray-300 mb-4"></div>
   {{ if gt (len $data.Ports) 0 }}
   <p><strong>Open Ports:</strong> {{ range $data.Ports }}{{ . }} {{ end }}</p>
   {{ else }}
