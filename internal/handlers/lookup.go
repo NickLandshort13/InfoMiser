@@ -1,160 +1,105 @@
 package handlers
 
 import (
-	"encoding/json"
-	"fmt"
-	"io"
 	"net"
 	"net/http"
-	"net/url"
-	"regexp"
-	"strings"
 	"time"
 
 	"infomiser/internal/models"
+	"infomiser/internal/services"
 )
 
-var client = &http.Client{Timeout: 10 * time.Second}
+func (h *Handlers) Home(w http.ResponseWriter, r *http.Request) {
+	data := struct {
+		Domain     string
+		IP         string
+		IPWhois    models.IPWhois
+		Subdomains models.Subdomains
+		SSL        models.SSLScan
+		Shodan     models.Shodan
+		Pwned      models.Pwned
+	}{
+		Domain: "",
+		IP:     "",
+		IPWhois: models.IPWhois{
+			IP:      "",
+			Country: "",
+			Region:  "",
+			City:    "",
+			Lat:     0,
+			Lon:     0,
+			ISP:     "",
+			Domain:  "",
+		},
+		Subdomains: models.Subdomains{
+			Domain:     "",
+			Subdomains: nil,
+		},
+		SSL: models.SSLScan{
+			Host:      "",
+			Valid:     false,
+			Protocols: nil,
+			Issuer:    "",
+		},
+		Shodan: models.Shodan{
+			IP:    "",
+			Ports: nil,
+		},
+		Pwned: models.Pwned{
+			Domain:   "",
+			Breaches: nil,
+		},
+	}
+
+	h.templates.ExecuteTemplate(w, "index.html", data)
+}
 
 func (h *Handlers) Lookup(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query().Get("q")
 	host := cleanInput(q)
 
 	if host == "" || !isValidQuery(host) {
-		w.Write([]byte(""))
+		h.templates.ExecuteTemplate(w, "results-multi.html", nil)
 		return
 	}
 
 	var ip string
-	var err error
-
 	if isDomain(host) {
-		ip, err = getIPFromDomain(host)
-		if err != nil {
-			ip = ""
+		tmp, err := services.GetIPFromDomain(host)
+		if err == nil && tmp != "" {
+			ip = tmp
 		}
 	} else if net.ParseIP(host) != nil {
 		ip = host
-	} else {
-		w.Write([]byte(""))
-		return
 	}
 
-	var ipInfo models.IPInfo
-	if ip != "" {
-		resp, err := client.Get("https://ipwho.is/" + url.PathEscape(ip))
-		if err == nil && resp.StatusCode == 200 {
-			body, _ := io.ReadAll(resp.Body)
-			if len(body) > 0 && body[0] == '{' {
-				json.Unmarshal(body, &ipInfo)
-			}
-		}
-	}
+	go func() {
+		time.Sleep(100 * time.Millisecond)
+	}()
 
-	var subdomains []string
-	if isDomain(host) {
-		subs, err := fetchHackerTargetSubdomains(host)
-		if err == nil && len(subs) > 0 {
-			subdomains = subs
-		}
-	}
+	ipWhois, _ := services.GetIPWhois(ip)
+	subdomains, _ := services.FetchHackerTargetSubdomains(host)
+	ssl, _ := services.AnalyzeSSL(host)
+	shodan, _ := services.QueryShodan(ip)
+	pwned, _ := services.CheckBreaches(host)
 
 	data := struct {
-		HasIP         bool
-		IP            string
-		IPInfo        models.IPInfo
-		HasSubdomains bool
-		Domain        string
-		Subdomains    []string
+		Domain     string
+		IP         string
+		IPWhois    models.IPWhois
+		Subdomains models.Subdomains
+		SSL        models.SSLScan
+		Shodan     models.Shodan
+		Pwned      models.Pwned
 	}{
-		HasIP:         ip != "",
-		IP:            ip,
-		IPInfo:        ipInfo,
-		HasSubdomains: len(subdomains) > 0,
-		Domain:        host,
-		Subdomains:    subdomains,
+		Domain:     host,
+		IP:         ip,
+		IPWhois:    ipWhois,
+		Subdomains: models.Subdomains{Domain: host, Subdomains: subdomains},
+		SSL:        ssl,
+		Shodan:     shodan,
+		Pwned:      pwned,
 	}
 
 	h.templates.ExecuteTemplate(w, "results-multi", data)
-}
-func fetchHackerTargetSubdomains(domain string) ([]string, error) {
-	url := fmt.Sprintf("https://api.hackertarget.com/hostsearch/?q=%s", domain)
-
-	resp, err := client.Get(url)
-	if err != nil || resp.StatusCode != 200 {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	body, _ := io.ReadAll(resp.Body)
-	lines := strings.Split(string(body), "\n")
-
-	var subs []string
-	for _, line := range lines {
-		parts := strings.Split(line, ",")
-		if len(parts) > 0 && strings.Contains(parts[0], ".") {
-			subs = append(subs, parts[0])
-		}
-	}
-
-	return removeDuplicates(subs), nil
-}
-
-func removeDuplicates(list []string) []string {
-	seen := make(map[string]bool)
-	result := make([]string, 0)
-
-	for _, item := range list {
-		if !seen[item] {
-			seen[item] = true
-			result = append(result, item)
-		}
-	}
-
-	return result
-}
-func cleanInput(input string) string {
-	input = strings.TrimSpace(input)
-	if input == "" {
-		return ""
-	}
-	if u, err := url.Parse(input); err == nil && u.Host != "" {
-		return u.Host
-	}
-	if strings.Contains(input, "/") {
-		parts := strings.SplitN(input, "/", 2)
-		input = parts[0]
-	}
-	return input
-}
-
-func isDomain(host string) bool {
-	if host == "" {
-		return false
-	}
-	domainRegex := regexp.MustCompile(`^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
-	return domainRegex.MatchString(host)
-}
-
-func isValidQuery(s string) bool {
-	if s == "" {
-		return false
-	}
-	if len(s) > 100 {
-		return false
-	}
-	return true
-}
-
-func getIPFromDomain(domain string) (string, error) {
-	ips, err := net.LookupIP(domain)
-	if err != nil {
-		return "", err
-	}
-	for _, ip := range ips {
-		if v4 := ip.To4(); v4 != nil {
-			return v4.String(), nil
-		}
-	}
-	return "", nil
 }

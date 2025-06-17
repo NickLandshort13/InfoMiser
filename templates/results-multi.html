@@ -1,15 +1,9 @@
 {{ define "results-multi" }}
 <div class="space-y-6">
-  {{ if .HasIP }}
-  <div>
-    {{ template "results-geo" .IPInfo }}
-  </div>
-  {{ end }}
-
-  {{ if .HasSubdomains }}
-  <div>
-    {{ template "results-subdomains" . }}
-  </div>
-  {{ end }}
+  <div>{{ template "card-ipwhois" . }}</div>
+  <div>{{ template "card-subdomains" . }}</div>
+  <div>{{ template "card-ssllabs" . }}</div>
+  <div>{{ template "card-shodan" . }}</div>
+  <div>{{ template "card-pwned" . }}</div>
 </div>
 {{ end }}

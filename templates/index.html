@@ -5,47 +5,28 @@
   <title>InfoMiser</title>
   <script src="https://unpkg.com/htmx.org@1.9.2"></script> 
   <script src="https://cdn.tailwindcss.com"></script> 
-
-  <style>
-    .spinner {
-      display:inline-block;width:16px;height:16px;border:2px solid #4f46e5;
-      border-top-color:#a78bfa;border-radius:9999px;animation:spin 1s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .htmx-indicator { display:none; }
-    .htmx-request .htmx-indicator { display:flex; }
-    .htmx-request .htmx-content { display:none; }
-  </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col items-center justify-start p-6">
 
-  <!-- Header -->
-  <div class="text-center mb-6">
-    <h1 class="text-4xl font-bold text-indigo-700">🔍 InfoMiser</h1>
-    <p class="text-gray-600 mt-2">Collect OSINT data about domains and IP addresses</p>
-  </div>
+  <h1 class="text-4xl font-bold text-indigo-700">🔍 InfoMiser</h1>
+  <p class="text-gray-600 mt-2 mb-6">Collect OSINT data about domains and IP addresses</p>
 
-  <!-- Search Form -->
   <form hx-get="/lookup" hx-target="#results" hx-swap="innerHTML"
-        class="w-full max-w-3xl mb-8" hx-indicator="#spinner">
+        class="w-full max-w-3xl mb-8">
     <div class="flex items-center border-b border-gray-300 py-1 shadow-sm rounded-lg overflow-hidden bg-white transition-all duration-300 hover:shadow-md">
       <input type="text" name="q"
              placeholder="Enter domain or IP, e.g.: example.com"
              required
-             class="appearance-none bg-transparent border-none w-full text-gray-700 mr-2 py-2 px-4 leading-tight focus:outline-none"/>
+             class="appearance-none bg-transparent border-none w-full text-gray-700 mr-2 py-2 px-4 leading-tight focus:outline-none">
       <button type="submit"
-              class="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-semibold py-2 px-5 rounded transition-all duration-300 shadow-sm">
+              class="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-semibold py-2 px-5 rounded transition-all duration-300 shadow-sm hover:shadow-md transform hover:-translate-y-0.5">
         🔍 Search
       </button>
     </div>
-    <!-- <div id="spinner" class="mt-2 flex items-center gap-2 text-indigo-500 font-medium">
-      <span class="spinner"></span><span>Loading...</span>
-    </div> -->
   </form>
 
-  <!-- Results Area -->
   <div id="results" class="w-full max-w-3xl space-y-6">
-    <p class="text-gray-500 italic">Results will appear here.</p>
+    {{ template "results-multi" . }}
   </div>
 
 </body>

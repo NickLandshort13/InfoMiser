@@ -1,0 +1,19 @@
+{{ define "card-ipwhois" }}
+{{ $data := .IPWhois }}
+<div class="bg-white shadow-md rounded-lg p-6">
+  <h2 class="text-2xl font-bold text-gray-800 mb-4">🌐 IP Info</h2>
+  {{ if $data.IP }}
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <p><strong>IP:</strong> {{ $data.IP }}</p>
+    <p><strong>Country:</strong> {{ $data.Country }}</p>
+    <p><strong>Region:</strong> {{ $data.Region }}</p>
+    <p><strong>City:</strong> {{ $data.City }}</p>
+    <p><strong>Coordinates:</strong> {{ $data.Lat }}, {{ $data.Lon }}</p>
+    <p><strong>ISP:</strong> {{ $data.ISP }}</p>
+    <p><strong>Organization:</strong> {{ $data.Domain }}</p>
+  </div>
+  {{ else }}
+  <p class="text-gray-500 italic">❌ No IP info found.</p>
+  {{ end }}
+</div>
+{{ end }}
